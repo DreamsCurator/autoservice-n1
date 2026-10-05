@@ -1,0 +1,4 @@
+.env
+registry/certs/*
+!registry/certs/.gitkeep
+registry/auth/htpasswd

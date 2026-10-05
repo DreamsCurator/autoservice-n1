@@ -1,0 +1,206 @@
+name: autoservice
+
+# Контур заявки. Снаружи слушают только Nginx (сайт) и Registry (docker push).
+# PostgreSQL и backend порты на хост не публикуют.
+#
+# edge         — Nginx и будущий frontend
+# app          — только frontend и backend; Nginx сюда не подключён
+# data         — backend, PostgreSQL, pgAdmin; сеть internal, наружу не ходит
+# admin        — только pgAdmin, чтобы localhost:5050 работал при internal-сети data
+# registry_net — только реестр
+# ops          — только Watchtower
+#
+# Учётка реестра для docker login: .env (REGISTRY_USER / REGISTRY_PASSWORD).
+# CA для клиентской машины: registry/certs/ca.crt
+#   /etc/docker/certs.d/REGISTRY_HOST:REGISTRY_PORT/ca.crt
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-security: &default-security
+  - no-new-privileges:true
+
+services:
+  nginx:
+    image: nginx:stable-alpine
+    restart: unless-stopped
+    init: true
+    logging: *default-logging
+    security_opt: *default-security
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    networks:
+      - edge
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+      - com.centurylinklabs.watchtower.scope=autoservice
+    mem_limit: 64m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    init: true
+    logging: *default-logging
+    security_opt: *default-security
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=scram-sha-256
+    command:
+      - postgres
+      - -c
+      - listen_addresses=*
+      - -c
+      - shared_buffers=32MB
+      - -c
+      - effective_cache_size=64MB
+      - -c
+      - max_connections=20
+      - -c
+      - work_mem=2MB
+      - -c
+      - maintenance_work_mem=32MB
+      - -c
+      - wal_buffers=1MB
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - data
+    mem_limit: 256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  pgadmin:
+    image: dpage/pgadmin4:8.14
+    restart: unless-stopped
+    init: true
+    logging: *default-logging
+    security_opt: *default-security
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "True"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGADMIN_CONFIG_CHECK_EMAIL_DELIVERABILITY: "False"
+      PGADMIN_CONFIG_UPGRADE_CHECK_ENABLED: "False"
+      PGADMIN_DISABLE_POSTFIX: "True"
+      PGADMIN_REPLACE_SERVERS_ON_STARTUP: "True"
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin/servers.list.json:/pgadmin4/servers.json:ro
+    ports:
+      - "127.0.0.1:5050:80"
+    networks:
+      - data
+      - admin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    mem_limit: 280m
+
+  registry:
+    image: registry:2
+    restart: unless-stopped
+    init: true
+    logging: *default-logging
+    security_opt: *default-security
+    environment:
+      REGISTRY_HTTP_ADDR: 0.0.0.0:5000
+      REGISTRY_HTTP_TLS_CERTIFICATE: /certs/registry.crt
+      REGISTRY_HTTP_TLS_KEY: /certs/registry.key
+      REGISTRY_HTTP_SECRET: ${REGISTRY_HTTP_SECRET}
+      REGISTRY_AUTH: htpasswd
+      REGISTRY_AUTH_HTPASSWD_REALM: Autoservice Registry
+      REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+      REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /var/lib/registry
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+    volumes:
+      - registry_data:/var/lib/registry
+      - ./registry/auth:/auth:ro
+      - ./registry/certs:/certs:ro
+    ports:
+      - "${REGISTRY_PORT:-5000}:5000"
+    networks:
+      - registry_net
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+      - com.centurylinklabs.watchtower.scope=autoservice
+    mem_limit: 128m
+
+  watchtower:
+    image: nickfedor/watchtower:1.22.3
+    restart: unless-stopped
+    init: true
+    logging: *default-logging
+    security_opt: *default-security
+    environment:
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_LABEL_ENABLE: "true"
+      WATCHTOWER_SCOPE: autoservice
+      WATCHTOWER_INCLUDE_STOPPED: "false"
+      WATCHTOWER_ROLLING_RESTART: "true"
+      WATCHTOWER_POLL_INTERVAL: "300"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - ops
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+      - com.centurylinklabs.watchtower.scope=autoservice
+    mem_limit: 64m
+
+  # backend:
+  #   image: ${REGISTRY_HOST}:5000/autoservice-backend:latest
+  #   restart: unless-stopped
+  #   init: true
+  #   environment:
+  #     POSTGRES_HOST: postgres
+  #     POSTGRES_PORT: "5432"
+  #     POSTGRES_USER: ${POSTGRES_USER}
+  #     POSTGRES_DB: ${POSTGRES_DB}
+  #   expose:
+  #     - "8080"
+  #   networks:
+  #     - app
+  #     - data
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   labels:
+  #     - com.centurylinklabs.watchtower.enable=true
+  #     - com.centurylinklabs.watchtower.scope=autoservice
+  #   ports нет: с хоста и из интернета контейнер недоступен.
+  #   В сеть edge его не добавлять. До API доходит только frontend из сети app.
+
+networks:
+  edge: {}
+  app:
+    internal: true
+  data:
+    internal: true
+  admin: {}
+  registry_net: {}
+  ops: {}
+
+volumes:
+  postgres_data:
+  pgadmin_data:
+  registry_data:
