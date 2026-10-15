@@ -3,7 +3,7 @@ name: autoservice
 # Контур заявки. Снаружи слушают только Nginx (сайт) и Registry (docker push).
 # PostgreSQL и backend порты на хост не публикуют.
 #
-# edge         — Nginx и будущий frontend
+# edge         — Nginx и frontend
 # app          — только frontend и backend; Nginx сюда не подключён
 # data         — backend, PostgreSQL, pgAdmin; сеть internal, наружу не ходит
 # admin        — только pgAdmin, чтобы localhost:5050 работал при internal-сети data
@@ -41,8 +41,39 @@ services:
       - com.centurylinklabs.watchtower.enable=true
       - com.centurylinklabs.watchtower.scope=autoservice
     mem_limit: 64m
+    depends_on:
+      frontend:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  frontend:
+    image: nginx:stable-alpine
+    restart: unless-stopped
+    init: true
+    logging: *default-logging
+    security_opt: *default-security
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html:ro
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - edge
+      - app
+    expose:
+      - "80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+      - com.centurylinklabs.watchtower.scope=autoservice
+    mem_limit: 64m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -167,28 +198,45 @@ services:
       - com.centurylinklabs.watchtower.scope=autoservice
     mem_limit: 64m
 
-  # backend:
-  #   image: ${REGISTRY_HOST}:5000/autoservice-backend:latest
-  #   restart: unless-stopped
-  #   init: true
-  #   environment:
-  #     POSTGRES_HOST: postgres
-  #     POSTGRES_PORT: "5432"
-  #     POSTGRES_USER: ${POSTGRES_USER}
-  #     POSTGRES_DB: ${POSTGRES_DB}
-  #   expose:
-  #     - "8080"
-  #   networks:
-  #     - app
-  #     - data
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   labels:
-  #     - com.centurylinklabs.watchtower.enable=true
-  #     - com.centurylinklabs.watchtower.scope=autoservice
-  #   ports нет: с хоста и из интернета контейнер недоступен.
-  #   В сеть edge его не добавлять. До API доходит только frontend из сети app.
+  # Порт на хост не публикуется: ключа ports нет.
+  # expose только объявляет 8080 внутри Docker и наружу его не открывает.
+  # Сети app и data внутренние. В edge backend не входит, Nginx до него не ходит.
+  # С хоста и из интернета контейнер недоступен. API вызывает frontend из сети app.
+  backend:
+    build: ./backend
+    image: autoservice-backend:latest
+    restart: unless-stopped
+    init: true
+    logging: *default-logging
+    security_opt: *default-security
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    expose:
+      - "8080"
+    networks:
+      - app
+      - data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+      - com.centurylinklabs.watchtower.scope=autoservice
+    mem_limit: 256m
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health')
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
 networks:
   edge: {}

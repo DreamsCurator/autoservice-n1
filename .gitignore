@@ -2,3 +2,5 @@
 registry/certs/*
 !registry/certs/.gitkeep
 registry/auth/htpasswd
+__pycache__/
+*.pyc

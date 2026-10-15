@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Заявка — Autoservice</title>
+    <meta
+      name="description"
+      content="Форма заявки для тёплых клиентов Autoservice."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div class="orbs" aria-hidden="true">
+      <span class="orb orb-a"></span>
+      <span class="orb orb-b"></span>
+      <span class="orb orb-c"></span>
+      <span class="orb orb-d"></span>
+      <span class="orb orb-e"></span>
+      <span class="orb orb-f"></span>
+      <span class="orb orb-g"></span>
+      <span class="orb orb-h"></span>
+      <span class="orb orb-i"></span>
+      <span class="orb orb-j"></span>
+      <span class="orb orb-k"></span>
+      <span class="orb orb-l"></span>
+    </div>
+
+    <main class="page">
+      <header class="intro" data-zone="шапка">
+        <p class="eyebrow">Autoservice</p>
+        <h1>Заявка для своих</h1>
+        <p class="lede">
+          Расскажите о задаче. Поля ниже уходят одним пакетом и остаются внутри контура.
+        </p>
+      </header>
+
+      <form id="lead-form" class="sheet" novalidate>
+        <p id="form-status" class="status" role="status" hidden></p>
+
+        <section class="block" data-zone="контакт">
+          <div class="block-head">
+            <span>01</span>
+            <h2>Контакт</h2>
+          </div>
+          <div class="grid">
+            <label class="field">
+              <span>Фамилия</span>
+              <input name="last_name" autocomplete="family-name" maxlength="200" required />
+              <small class="hint">Укажите фамилию</small>
+            </label>
+            <label class="field">
+              <span>Имя</span>
+              <input name="first_name" autocomplete="given-name" maxlength="200" required />
+              <small class="hint">Укажите имя</small>
+            </label>
+            <label class="field span-2">
+              <span>Отчество</span>
+              <input name="middle_name" autocomplete="additional-name" maxlength="200" />
+            </label>
+          </div>
+        </section>
+
+        <section class="block" data-zone="задача">
+          <div class="block-head">
+            <span>02</span>
+            <h2>Задача</h2>
+          </div>
+          <div class="grid">
+            <label class="field span-2">
+              <span>Услуга</span>
+              <select name="product_interest" required>
+                <option value="">Загрузка услуг…</option>
+              </select>
+              <small id="service-note" class="note"></small>
+              <small class="hint">Выберите услугу</small>
+            </label>
+            <div class="field span-2">
+              <div class="budget-head">
+                <label for="budget">Бюджет</label>
+                <output id="budget-value" for="budget">80 000 ₽</output>
+              </div>
+              <input
+                id="budget"
+                name="budget"
+                type="range"
+                min="10000"
+                max="300000"
+                step="5000"
+                value="80000"
+              />
+            </div>
+            <label class="field span-2">
+              <span>Срок исполнения заказа</span>
+              <input
+                name="deadline"
+                maxlength="500"
+                required
+                placeholder="Например, до конца месяца"
+              />
+              <small class="hint">Укажите срок</small>
+            </label>
+          </div>
+        </section>
+
+        <section class="block" data-zone="связь">
+          <div class="block-head">
+            <span>03</span>
+            <h2>Связь</h2>
+          </div>
+          <div class="grid">
+            <label class="field">
+              <span>Способ связи</span>
+              <input
+                name="contact_method"
+                maxlength="200"
+                required
+                placeholder="Телефон, Telegram или почта"
+              />
+              <small class="hint">Укажите способ связи</small>
+            </label>
+            <label class="field">
+              <span>Удобное время</span>
+              <input
+                name="convenient_time"
+                maxlength="200"
+                required
+                placeholder="Будни после 18:00"
+              />
+              <small class="hint">Укажите удобное время</small>
+            </label>
+            <label class="field span-2">
+              <span>Комментарий</span>
+              <textarea name="comment" rows="3" maxlength="4000"></textarea>
+            </label>
+          </div>
+        </section>
+
+        <div class="submit-row">
+          <button type="submit" data-track="отправить заявку">Отправить заявку</button>
+          <p>Запись остаётся на этом сервере.</p>
+        </div>
+      </form>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

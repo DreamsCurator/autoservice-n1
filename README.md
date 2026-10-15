@@ -13,7 +13,7 @@
 | pgAdmin | `dpage/pgadmin4:8.14` | `127.0.0.1:5050` на сервере |
 | Registry | `registry:2` | порт 5000, HTTPS и `docker login` |
 | Watchtower | `nickfedor/watchtower:1.22.3` | обновляет контейнеры с меткой `autoservice` |
-| backend | — | закомментирован в `docker-compose.yml` |
+| backend | сборка `./backend` | сети `app` и `data`, порт на хост не публикуется |
 
 Сети:
 
