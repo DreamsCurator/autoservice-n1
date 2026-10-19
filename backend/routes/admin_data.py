@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fastapi import APIRouter, HTTPException, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import ConfigDict, Field
 
 from core.database import transaction
+from core.security import require_admin
 from models.admin_data import AdminDataCRUD
 from routes.common import ApiModel, db_errors
 
@@ -80,7 +81,13 @@ def current_admin() -> dict:
     return row
 
 
-@router.post("", response_model=AdminOut, status_code=201, summary="Сохранить админ-данные")
+@router.post(
+    "",
+    response_model=AdminOut,
+    status_code=201,
+    summary="Сохранить админ-данные",
+    dependencies=[Depends(require_admin)],
+)
 def create_admin(body: AdminBody) -> dict:
     with db_errors():
         return AdminDataCRUD.create(_dump_admin(body, exclude_unset=False))
@@ -94,7 +101,12 @@ def get_admin(item_id: int = Path(gt=0)) -> dict:
     return row
 
 
-@router.patch("/{item_id}", response_model=AdminOut, summary="Изменить админ-данные")
+@router.patch(
+    "/{item_id}",
+    response_model=AdminOut,
+    summary="Изменить админ-данные",
+    dependencies=[Depends(require_admin)],
+)
 def update_admin(body: AdminUpdate, item_id: int = Path(gt=0)) -> dict:
     data = _dump_admin(body, exclude_unset=True)
     with db_errors():
@@ -105,7 +117,12 @@ def update_admin(body: AdminUpdate, item_id: int = Path(gt=0)) -> dict:
     return row
 
 
-@router.delete("/{item_id}", status_code=204, summary="Удалить админ-данные")
+@router.delete(
+    "/{item_id}",
+    status_code=204,
+    summary="Удалить админ-данные",
+    dependencies=[Depends(require_admin)],
+)
 def delete_admin(item_id: int = Path(gt=0)) -> None:
     if not AdminDataCRUD.delete(item_id):
         raise _missing()

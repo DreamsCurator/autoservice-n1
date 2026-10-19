@@ -67,9 +67,75 @@
           </div>
         </section>
 
-        <section class="block" data-zone="задача">
+        <section class="block" data-zone="бизнес">
           <div class="block-head">
             <span>02</span>
+            <h2>Бизнес</h2>
+          </div>
+          <div class="grid">
+            <label class="field span-2">
+              <span>О бизнесе</span>
+              <textarea
+                name="business_info"
+                rows="3"
+                maxlength="4000"
+                required
+                placeholder="Чем занимаетесь и зачем вам услуга"
+              ></textarea>
+              <small class="hint">Расскажите о бизнесе</small>
+            </label>
+            <label class="field">
+              <span>Ниша</span>
+              <input
+                name="business_niche"
+                maxlength="500"
+                required
+                placeholder="Например, такси, дилер, частный клиент"
+              />
+              <small class="hint">Укажите нишу</small>
+            </label>
+            <fieldset class="field">
+              <legend>Роль</legend>
+              <div class="choice-row">
+                <label class="choice-item">
+                  <input type="radio" name="role" value="сотрудник" required />
+                  <span>Сотрудник</span>
+                </label>
+                <label class="choice-item">
+                  <input type="radio" name="role" value="руководитель" />
+                  <span>Руководитель</span>
+                </label>
+              </div>
+              <small class="hint">Выберите роль</small>
+            </fieldset>
+            <label class="field">
+              <span>Размер компании</span>
+              <select name="company_size" required>
+                <option value="">Выберите</option>
+                <option>ИП, 1–2 человека</option>
+                <option>Небольшая компания, до 15 человек</option>
+                <option>Средняя компания, около 50 человек</option>
+                <option>Крупная компания или сеть</option>
+              </select>
+              <small class="hint">Укажите размер компании</small>
+            </label>
+            <label class="field">
+              <span>Размер бизнеса</span>
+              <select name="business_size" required>
+                <option value="">Выберите</option>
+                <option>Разовые частные заказы</option>
+                <option>Малый бизнес</option>
+                <option>Средний бизнес</option>
+                <option>Крупный бизнес</option>
+              </select>
+              <small class="hint">Укажите размер бизнеса</small>
+            </label>
+          </div>
+        </section>
+
+        <section class="block" data-zone="задача">
+          <div class="block-head">
+            <span>03</span>
             <h2>Задача</h2>
           </div>
           <div class="grid">
@@ -96,6 +162,37 @@
                 value="80000"
               />
             </div>
+            <label class="field">
+              <span>Тип задачи</span>
+              <select name="task_type" required>
+                <option value="">Выберите</option>
+                <option>Разовая услуга</option>
+                <option>Срочный ремонт или восстановление</option>
+                <option>Обслуживание парка</option>
+                <option>Премиальная отделка</option>
+              </select>
+              <small class="hint">Укажите тип задачи</small>
+            </label>
+            <label class="field">
+              <span>Объём задачи</span>
+              <select name="task_volume" required>
+                <option value="">Выберите</option>
+                <option>Один автомобиль, разовая работа</option>
+                <option>Несколько машин время от времени</option>
+                <option>Автопарк, постоянный поток</option>
+              </select>
+              <small class="hint">Укажите объём задачи</small>
+            </label>
+            <label class="field span-2">
+              <span>Объём потребности</span>
+              <select name="need_volume" required>
+                <option value="">Выберите</option>
+                <option>Одна услуга один раз</option>
+                <option>Регулярно, несколько раз в месяц</option>
+                <option>Постоянный контракт</option>
+              </select>
+              <small class="hint">Укажите объём потребности</small>
+            </label>
             <label class="field span-2">
               <span>Срок исполнения заказа</span>
               <input
@@ -111,7 +208,7 @@
 
         <section class="block" data-zone="связь">
           <div class="block-head">
-            <span>03</span>
+            <span>04</span>
             <h2>Связь</h2>
           </div>
           <div class="grid">

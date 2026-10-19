@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Админ-панель — Autoservice</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="stylesheet" href="/src/admin.css" />
+  </head>
+  <body class="admin-body">
+    <div class="orbs" aria-hidden="true">
+      <span class="orb orb-a"></span>
+      <span class="orb orb-c"></span>
+      <span class="orb orb-e"></span>
+      <span class="orb orb-g"></span>
+      <span class="orb orb-i"></span>
+      <span class="orb orb-k"></span>
+    </div>
+
+    <main class="page admin-page">
+      <section id="auth-view" class="sheet auth-sheet" hidden>
+        <header class="intro">
+          <p class="eyebrow">Autoservice</p>
+          <h1 id="auth-title">Вход</h1>
+          <p class="lede" id="auth-lede">Войдите, чтобы управлять услугами и смотреть заявки.</p>
+        </header>
+        <p id="auth-status" class="status" role="status" hidden></p>
+        <form id="auth-form" class="auth-form" novalidate>
+          <label class="field">
+            <span>Логин</span>
+            <input name="login" autocomplete="username" maxlength="100" required />
+            <small class="hint">Укажите логин</small>
+          </label>
+          <label class="field">
+            <span>Пароль</span>
+            <input
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              maxlength="200"
+              required
+            />
+            <small class="hint">Минимум 6 символов</small>
+          </label>
+          <div class="submit-row">
+            <button type="submit" id="auth-submit">Войти</button>
+            <button type="button" id="auth-register" class="ghost" hidden>
+              Зарегистрироваться
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section id="panel-view" hidden>
+        <header class="admin-top">
+          <div>
+            <p class="eyebrow">Админ-панель</p>
+            <h1>Управление</h1>
+            <p class="lede" id="admin-hello"></p>
+          </div>
+          <button type="button" id="logout-btn" class="ghost">Выйти</button>
+        </header>
+
+        <nav class="tabs" role="tablist">
+          <button type="button" class="tab is-active" data-tab="services">Услуги</button>
+          <button type="button" class="tab" data-tab="stats">Статистика</button>
+          <button type="button" class="tab" data-tab="heatmap">Heatmap</button>
+          <!--
+            Будущие разделы без отдельного API пока не подключаем:
+            <button type="button" class="tab" data-tab="reports" disabled>Отчёты</button>
+            <button type="button" class="tab" data-tab="settings" disabled>Настройки</button>
+          -->
+        </nav>
+
+        <p id="panel-status" class="status" role="status" hidden></p>
+
+        <section id="tab-services" class="sheet tab-panel">
+          <div class="block-head">
+            <span>01</span>
+            <h2>Доступные услуги</h2>
+          </div>
+          <form id="service-form" class="grid" novalidate>
+            <label class="field">
+              <span>Название</span>
+              <input name="name" maxlength="300" required />
+              <small class="hint">Укажите название</small>
+            </label>
+            <label class="field">
+              <span>Описание</span>
+              <input name="description" maxlength="2000" />
+            </label>
+            <label class="field">
+              <span>Бюджет от</span>
+              <input name="budget_min" type="number" min="0" step="1000" value="10000" required />
+            </label>
+            <label class="field">
+              <span>Бюджет до</span>
+              <input name="budget_max" type="number" min="0" step="1000" value="100000" required />
+            </label>
+            <label class="field">
+              <span>Шаг бюджета</span>
+              <input name="budget_step" type="number" min="1" step="100" value="2000" required />
+            </label>
+            <div class="field submit-field span-2">
+              <p id="service-mode" class="service-mode" hidden></p>
+              <div class="submit-row">
+                <button type="submit" id="service-submit">Добавить услугу</button>
+                <button type="button" id="service-cancel" class="ghost" hidden>Отмена</button>
+              </div>
+            </div>
+          </form>
+          <ul id="services-list" class="data-list"></ul>
+        </section>
+
+        <section id="tab-stats" class="sheet tab-panel" hidden>
+          <div class="block-head">
+            <span>02</span>
+            <h2>Статистика заказов</h2>
+          </div>
+          <div id="stats-cards" class="stats-cards"></div>
+          <p class="lede heatmap-note">
+            Чем горячее лид, тем выше он в списке. Температуру дают срок, бюджет, роль, размер компании и объём задачи.
+          </p>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Температура лида</th>
+                  <th>Почему</th>
+                  <th>Клиент</th>
+                  <th>Услуга</th>
+                  <th>Бюджет</th>
+                  <th>Срок</th>
+                  <th>Отдел</th>
+                  <th>Менеджер</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="leads-body"></tbody>
+            </table>
+          </div>
+          <article id="lead-detail" class="lead-detail" hidden></article>
+        </section>
+
+        <section id="tab-heatmap" class="sheet tab-panel" hidden>
+          <div class="block-head">
+            <span>03</span>
+            <h2>Карта зависаний курсора</h2>
+          </div>
+          <p class="lede heatmap-note">
+            Точки собраны из позиций курсора на странице заявки. Чем ярче область — тем дольше
+            курсор там оставался.
+          </p>
+          <div class="heatmap-meta">
+            <span id="heatmap-count">Точек: 0</span>
+            <button type="button" id="heatmap-refresh" class="ghost">Обновить</button>
+          </div>
+          <canvas id="heatmap-canvas" width="920" height="520" aria-label="Heatmap"></canvas>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="/src/admin.js"></script>
+  </body>
+</html>

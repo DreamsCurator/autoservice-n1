@@ -5,10 +5,11 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from fastapi import APIRouter, HTTPException, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from pydantic import ConfigDict, Field, field_validator
 
 from core.database import transaction
+from core.security import require_admin
 from models.lead import LeadCRUD
 from models.lead_metrics import LeadMetricsCRUD
 from routes.common import ApiModel, db_errors
@@ -104,7 +105,12 @@ def _missing() -> HTTPException:
     return HTTPException(status_code=404, detail="Заявка не найдена")
 
 
-@router.get("", response_model=LeadPage, summary="Список заявок")
+@router.get(
+    "",
+    response_model=LeadPage,
+    summary="Список заявок",
+    dependencies=[Depends(require_admin)],
+)
 def list_leads(
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
@@ -128,7 +134,12 @@ def create_lead(body: LeadCreate) -> dict:
     return {**lead, "metrics": metrics}
 
 
-@router.get("/{lead_id}", response_model=LeadPackageOut, summary="Заявка с метриками")
+@router.get(
+    "/{lead_id}",
+    response_model=LeadPackageOut,
+    summary="Заявка с метриками",
+    dependencies=[Depends(require_admin)],
+)
 def get_lead(lead_id: int = Path(gt=0)) -> dict:
     with transaction():
         lead = LeadCRUD.get(lead_id)
@@ -138,7 +149,12 @@ def get_lead(lead_id: int = Path(gt=0)) -> dict:
     return {**lead, "metrics": metrics}
 
 
-@router.patch("/{lead_id}", response_model=LeadOut, summary="Изменить заявку")
+@router.patch(
+    "/{lead_id}",
+    response_model=LeadOut,
+    summary="Изменить заявку",
+    dependencies=[Depends(require_admin)],
+)
 def update_lead(body: LeadUpdate, lead_id: int = Path(gt=0)) -> dict:
     data = body.model_dump(exclude_unset=True)
     with db_errors():
@@ -149,7 +165,12 @@ def update_lead(body: LeadUpdate, lead_id: int = Path(gt=0)) -> dict:
     return row
 
 
-@router.delete("/{lead_id}", status_code=204, summary="Удалить заявку")
+@router.delete(
+    "/{lead_id}",
+    status_code=204,
+    summary="Удалить заявку",
+    dependencies=[Depends(require_admin)],
+)
 def delete_lead(lead_id: int = Path(gt=0)) -> None:
     if not LeadCRUD.delete(lead_id):
         raise _missing()

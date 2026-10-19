@@ -78,7 +78,7 @@ def _dumps(value: Any) -> str:
 
 
 def adapt(column: str, value: Any) -> Any:
-    if column in JSONB_COLUMNS and value is not None:
+    if column in JSONB_COLUMNS and value is not None and not isinstance(value, str):
         return Jsonb(value, dumps=_dumps)
     return value
 

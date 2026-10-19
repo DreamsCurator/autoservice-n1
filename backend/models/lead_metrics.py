@@ -53,6 +53,36 @@ class LeadMetrics:
     )
 
 
+class VisitMetric:
+    """Снимок поведения на странице заявки. К заявке не привязан.
+
+    Каждую секунду страница присылает одну строку:
+    сколько секунд человек уже на странице, сколько раз нажал какие кнопки
+    и где в эту секунду был курсор (x,y).
+
+    CREATE TABLE IF NOT EXISTS visit_metrics (
+        id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        application_id INTEGER NOT NULL DEFAULT 0,
+        time_on_page DOUBLE PRECISION NOT NULL DEFAULT 0,
+        buttons_clicked TEXT NOT NULL DEFAULT '',
+        cursor_positions TEXT NOT NULL DEFAULT '',
+        return_frequency INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CONSTRAINT visit_metrics_time_chk CHECK (time_on_page >= 0),
+        CONSTRAINT visit_metrics_returns_chk CHECK (return_frequency >= 0)
+    );
+    """
+
+    table = "visit_metrics"
+    insert_columns = (
+        "application_id",
+        "time_on_page",
+        "buttons_clicked",
+        "cursor_positions",
+        "return_frequency",
+    )
+
+
 class LeadMetricsCRUD:
     """Создание, чтение, правка и удаление метрик заявки."""
 
@@ -91,3 +121,18 @@ class LeadMetricsCRUD:
     @staticmethod
     def delete(lead_id: int) -> bool:
         return delete_by(LeadMetrics.table, "lead_id", lead_id)
+
+
+class VisitMetricCRUD:
+    """Запись и чтение ежесекундных снимков страницы заявки."""
+
+    @staticmethod
+    def create(data: dict[str, Any]) -> dict[str, Any]:
+        try:
+            return insert_returning(VisitMetric.table, VisitMetric.insert_columns, data)
+        except CheckViolation as exc:
+            raise InvalidData("Некорректные метрики страницы") from exc
+
+    @staticmethod
+    def page(limit: int, offset: int) -> dict[str, Any]:
+        return fetch_page(VisitMetric.table, "id", limit, offset)

@@ -145,6 +145,12 @@ function validate() {
   form.querySelectorAll(".field").forEach((field) => {
     const control = field.querySelector("input, textarea, select");
     if (!control || control.type === "range") return;
+    if (control.type === "radio") {
+      const picked = field.querySelector("input[type='radio']:checked");
+      markInvalid(field, !picked);
+      if (!picked) valid = false;
+      return;
+    }
     const empty = control.required && !String(control.value || "").trim();
     markInvalid(field, empty);
     if (empty) valid = false;
@@ -186,15 +192,14 @@ function payload() {
     first_name: textOf("first_name"),
     last_name: textOf("last_name"),
     middle_name: optionalText("middle_name"),
-    // Поля сняты с формы, API пока требует непустые значения.
-    business_info: "—",
-    business_niche: "—",
-    company_size: "—",
-    business_size: "—",
-    task_volume: "—",
-    need_volume: "—",
-    role: "сотрудник",
-    task_type: "—",
+    business_info: textOf("business_info"),
+    business_niche: textOf("business_niche"),
+    company_size: textOf("company_size"),
+    business_size: textOf("business_size"),
+    task_volume: textOf("task_volume"),
+    need_volume: textOf("need_volume"),
+    role: textOf("role"),
+    task_type: textOf("task_type"),
     deadline: textOf("deadline"),
     product_interest: productSelect.value,
     budget: String(budgetInput.value),

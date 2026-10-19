@@ -14,6 +14,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 
 from core.database import create_sql_from_model, init_schema, ping, pool
+from core.security import jwt_secret
 from models import SCHEMA_MODELS
 from routes import api_router
 
@@ -26,6 +27,7 @@ async def lifespan(app: FastAPI):
         level=logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s %(message)s",
     )
+    jwt_secret()
     pool.open(wait=True, timeout=20)
     try:
         init_schema([create_sql_from_model(model) for model in SCHEMA_MODELS])
